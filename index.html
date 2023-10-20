@@ -7,15 +7,18 @@
     <title>freeCodeCamp - Visualize Data with a Bar Chart</title>
     <script defer src="/bundle.js"></script>
   </head>
-  <body class="flex min-h-screen items-center justify-center bg-slate-500 py-8">
+  <body class="flex min-h-screen items-center justify-center bg-slate-500 p-8">
     <div
       id="app"
-      class="container mx-auto flex min-h-full flex-col items-center rounded bg-slate-100 p-8 shadow shadow-slate-950/50"
+      class="container relative mx-auto flex min-h-full flex-col items-center overflow-hidden rounded bg-slate-100 p-8 shadow shadow-slate-950/50"
     >
       <h1 class="font-inter text-3xl font-bold" id="title">
         United States GDP
       </h1>
-      <div id="container" class="relative mt-4"></div>
+      <div
+        id="container"
+        class="mt-4 max-w-full self-start overflow-scroll lg:relative lg:self-center"
+      ></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

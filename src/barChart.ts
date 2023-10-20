@@ -1,6 +1,8 @@
 import * as d3 from "d3";
 import gdpData from "./GDP-data.json";
 
+const tw = (strings: TemplateStringsArray, ...values: string[]) =>
+  String.raw({ raw: strings }, ...values);
 const data = gdpData.data as [string, number][];
 
 export function setupChart(container: HTMLDivElement) {
@@ -12,6 +14,12 @@ export function setupChart(container: HTMLDivElement) {
   const marginBottom = 30;
   const marginLeft = 40;
   const barWidth = (width - marginRight - marginLeft) / data.length;
+
+  // Declare elements classes
+  const classes = {
+    tooltip: tw`absolute bottom-20 left-12 flex h-20 w-40 flex-col items-center justify-center rounded bg-white/90 p-3 font-inter shadow-lg shadow-fuchsia-950/10 lg:bottom-16 lg:left-16 [&>span:first-child]:font-bold`,
+    bar: tw`bar cursor-pointer fill-fuchsia-500 hover:fill-fuchsia-300 focus:fill-fuchsia-300`,
+  };
 
   // Declare the x (horizontal position) scale.
   const x = d3
@@ -30,19 +38,30 @@ export function setupChart(container: HTMLDivElement) {
     ])
     .range([height - marginBottom, marginTop]);
 
-  // Create the SVG container.
-  const svg = d3.create("svg").attr("width", width).attr("height", height);
-
   // Create tooltip
   const tooltip = d3
     .select("#container")
     .append("div")
     .attr("id", "tooltip")
     .style("opacity", 0)
-    .attr(
-      "class",
-      "bg-white/90 shadow-fuchsia-950/10 font-inter rounded w-40 p-3 h-20 absolute bottom-16 left-16 shadow-lg flex items-center justify-center flex-col",
-    );
+    .attr("class", classes.tooltip);
+
+  // Create the SVG container.
+  const svg = d3
+    .create("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .on("mouseout", (event: MouseEvent) => {
+      if (
+        document.activeElement?.classList.contains("bar") &&
+        !(event.relatedTarget as HTMLElement).classList.contains("bar")
+      ) {
+        setTimeout(() => {
+          (document.activeElement as HTMLElement | null)?.blur();
+        }, 600);
+        tooltip.transition().delay(500).duration(200).style("opacity", 0);
+      }
+    });
 
   // Add the x-axis.
   svg
@@ -76,21 +95,39 @@ export function setupChart(container: HTMLDivElement) {
     .attr("width", barWidth)
     .attr("y", (d) => y(d[1]))
     .attr("height", (d) => height - marginBottom - y(d[1]))
-    .attr("class", "bar fill-fuchsia-500 hover:fill-fuchsia-300")
+    .attr("class", classes.bar)
+    .attr("tabindex", "0")
     .attr("data-date", (d) => d[0])
     .attr("data-gdp", (d) => d[1])
     .on("mouseover", (_, d) => {
+      if (!document.activeElement?.classList.contains("bar")) {
+        tooltip.transition().duration(200).style("opacity", 0.9);
+        tooltip
+          .html(
+            `<span>Q${quartMap[d[0].slice(5, 7) as Month]}
+            ${d[0].slice(0, 4)}</span>
+             <span>$${d[1].toLocaleString()} Billion</span>`,
+          )
+          .attr("data-date", d[0]);
+      }
+    })
+    .on("focus", (_, d) => {
       tooltip.transition().duration(200).style("opacity", 0.9);
       tooltip
         .html(
-          `<span class="font-bold">Q${quartMap[d[0].slice(5, 7) as Month]}
+          `<span>Q${quartMap[d[0].slice(5, 7) as Month]}
           ${d[0].slice(0, 4)}</span>
            <span>$${d[1].toLocaleString()} Billion</span>`,
         )
         .attr("data-date", d[0]);
     })
-    .on("mouseout", () => {
+    .on("blur", () => {
       tooltip.transition().duration(200).style("opacity", 0);
+    })
+    .on("mouseout", () => {
+      if (!document.activeElement?.classList.contains("bar")) {
+        tooltip.transition().duration(200).style("opacity", 0);
+      }
     });
 
   container.append(svg.node() as Node);
