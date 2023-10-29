@@ -54,7 +54,7 @@ export function setupChart(container: HTMLDivElement) {
     .on("mouseout", (event: MouseEvent) => {
       if (
         document.activeElement?.classList.contains("bar") &&
-        !(event.relatedTarget as HTMLElement).classList.contains("bar")
+        !(event.relatedTarget as HTMLElement)?.classList.contains("bar")
       ) {
         setTimeout(() => {
           (document.activeElement as HTMLElement | null)?.blur();
